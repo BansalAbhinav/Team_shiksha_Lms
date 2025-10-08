@@ -3,9 +3,9 @@ import { Router } from "express";
 const router = Router();
 import { addBook, getAllBooks, getBookById, updateBook, deleteBook, issueBook, returnBook } from "../controllers/bookController.js";
 
-router.use("/",(req, res)=>{
-    res.json({message:"Testing"})
-})
+// router.use("/",(req, res)=>{
+//     res.json({message:"Testing"})
+// })
 // 📘 Add a new book
 router.post("/add", addBook);
 
