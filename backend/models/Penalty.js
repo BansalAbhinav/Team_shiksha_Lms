@@ -1,8 +1,8 @@
-const mongoose = require("mongoose");
+import { Schema, model } from "mongoose";
 
-const penaltySchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  bookId: { type: mongoose.Schema.Types.ObjectId, ref: "Book", required: true },
+const penaltySchema = new Schema({
+  userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  bookId: { type: Schema.Types.ObjectId, ref: "Book", required: true },
   issueDate: { type: Date, required: true },
   dueDate: { type: Date, required: true },
   returnDate: { type: Date },
@@ -11,4 +11,4 @@ const penaltySchema = new mongoose.Schema({
   status: { type: String, enum: ["unpaid", "paid"], default: "unpaid" },
 });
 
-module.exports = mongoose.model("Penalty", penaltySchema);
+export default model("Penalty", penaltySchema);

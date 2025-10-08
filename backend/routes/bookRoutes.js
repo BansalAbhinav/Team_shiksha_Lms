@@ -1,17 +1,9 @@
-const express = require("express");
+import { Router } from "express";
 
-const router = express.Router();
-const {
-  addBook,
-  getAllBooks,
-  getBookById,
-  updateBook,
-  deleteBook,
-  issueBook,
-  returnBook,
-} = require("../controllers/bookController");
+const router = Router();
+import { addBook, getAllBooks, getBookById, updateBook, deleteBook, issueBook, returnBook } from "../controllers/bookController.js";
 
-router.all("/",(req, res)=>{
+router.use("/",(req, res)=>{
     res.json({message:"Testing"})
 })
 // 📘 Add a new book
@@ -35,4 +27,4 @@ router.post("/issue", issueBook);
 // 🔁 Return a book and update availability
 router.post("/return", returnBook);
 
-module.exports = router;
+export default router;

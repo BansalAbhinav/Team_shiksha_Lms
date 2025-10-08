@@ -1,12 +1,13 @@
-const express = require("express");
-const router = express.Router();
-router.use(express.json());
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
-const bcrypt = require("bcrypt");
+import { Router, json } from "express";
+const router = Router();
+router.use(json());
+
+import pkg from 'jsonwebtoken';
+import User from "../models/User.js";
+import { genSalt, hash } from "bcrypt";
 
 const JWT_SECRET = process.env.JWT_SECRET;
-
+const { sign, verify } = pkg;
 // Signup route
 router.post("/signup", async (req, res) => {
     const {name, email, password, role} = req.body;
@@ -16,8 +17,8 @@ router.post("/signup", async (req, res) => {
             return res.status(400).json({"error": "User already exists. Please login instead."})
         }
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        const salt = await genSalt(10);
+        const hashedPassword = await hash(password, salt);
 
         const newUser = new User({name, email, password: hashedPassword, role});
         const savedUser = await newUser.save();
@@ -43,7 +44,7 @@ router.post("/login", async (req, res) => {
             return res.status(400).json({"error": "Invalid Credentials."});
         }
 
-        const token = jwt.sign({id: user._id}, JWT_SECRET, {expiresIn: "4h"});
+        const token = sign({id: user._id}, JWT_SECRET, {expiresIn: "4h"});
 
         res.status(200).json({"message": "Login successful", email: user.email, token})
 
@@ -60,7 +61,7 @@ const verifyJwt = (req, res, next) => {
     }
     const token = authHeader.split(" ")[1];
     try {
-        const decodedToken = jwt.verify(token, JWT_SECRET);
+        const decodedToken = verify(token, JWT_SECRET);
         req.user = decodedToken;
         next();
     } catch (error) {
@@ -68,5 +69,5 @@ const verifyJwt = (req, res, next) => {
     }
 }
 
-module.exports = {router, verifyJwt};
+export { router, verifyJwt };
 

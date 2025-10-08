@@ -1,28 +1,25 @@
-const express = require("express");
-const dotenv = require("dotenv");
-const cors = require("cors");
-const connectDB = require("./config/db");
-const bookRoutes = require("./routes/bookRoutes");
+import express, { json } from "express";
+import { config } from "dotenv";
+import cors from "cors";
+import connectDB from "./config/db.js";
+import bookRoutes from "./routes/bookRoutes.js";
+import { router as authRoutes, verifyJwt } from "./routes/authRoutes.js";
 
+// Import routes (you’ll implement later)
+// import penaltyRoutes from "./routes/penaltyRoutes.js";
+// import reviewRoutes from "./routes/reviewRoutes.js";
 
-dotenv.config();
+config();
 connectDB();
 
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(json());
 
-// Sample test route
 app.get("/api/test", (req, res) => {
   res.json({ message: "Backend is working!" });
 });
-
-// Import routes (you’ll implement later)
-const {router: authRoutes, verifyJwt} = require("./routes/authRoutes");
-// const bookRoutes = require("./routes/bookRoutes");
-// const penaltyRoutes = require("./routes/penaltyRoutes");
-// const reviewRoutes = require("./routes/reviewRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/books", bookRoutes);

@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 const issueSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     bookId: { type: mongoose.Schema.Types.ObjectId, ref: "Book", required: true },
@@ -7,4 +9,4 @@ const issueSchema = new mongoose.Schema({
     returned: { type: Boolean, default: false },
   });
 
-module.exports = mongoose.model("Issue", issueSchema);
+export default mongoose.model("Issue", issueSchema);
