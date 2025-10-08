@@ -3,7 +3,8 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Books from "./pages/Books";
 import Contact from "./pages/Contact";
-
+import Login from "./components/Auth/Login";
+import Signup from "./components/Auth/Signup";
 function App() {
   return (
     <Router>
@@ -14,6 +15,8 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/books" element={<Books />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/Login" element={<Login />} />
+            <Route path="/Signup" element={<Signup />} />
           </Routes>
         </main>
         <footer className="bg-gray-900 text-white py-4 text-center">
