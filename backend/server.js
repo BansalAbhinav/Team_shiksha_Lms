@@ -19,12 +19,12 @@ app.get("/api/test", (req, res) => {
 });
 
 // Import routes (you’ll implement later)
-// const authRoutes = require("./routes/authRoutes");
+const {router: authRoutes, verifyJwt} = require("./routes/authRoutes");
 // const bookRoutes = require("./routes/bookRoutes");
 // const penaltyRoutes = require("./routes/penaltyRoutes");
 // const reviewRoutes = require("./routes/reviewRoutes");
 
-// app.use("/api/auth", authRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api/books", bookRoutes);
 // app.use("/api/penalty", penaltyRoutes);
 // app.use("/api/reviews", reviewRoutes);
