@@ -1,7 +1,13 @@
-import express, { json } from "express";
+
 import { config } from "dotenv";
-import cors from "cors";
 import connectDB from "./config/db.js";
+
+config();
+connectDB();
+
+import express, { json } from "express";
+import cors from "cors";
+
 import bookRoutes from "./routes/bookRoutes.js";
 import { router as authRoutes, verifyJwt } from "./routes/authRoutes.js";
 
@@ -9,8 +15,6 @@ import { router as authRoutes, verifyJwt } from "./routes/authRoutes.js";
 // import penaltyRoutes from "./routes/penaltyRoutes.js";
 // import reviewRoutes from "./routes/reviewRoutes.js";
 
-config();
-connectDB();
 
 const app = express();
 
@@ -21,8 +25,9 @@ app.get("/api/test", (req, res) => {
   res.json({ message: "Backend is working!" });
 });
 
+// verifyJwt is not required for auth routes
 app.use("/api/auth", authRoutes);
-app.use("/api/books", bookRoutes);
+app.use("/api/books", verifyJwt, bookRoutes);
 // app.use("/api/penalty", penaltyRoutes);
 // app.use("/api/reviews", reviewRoutes);
 

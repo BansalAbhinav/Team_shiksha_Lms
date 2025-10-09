@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -7,6 +9,8 @@ const Signup = () => {
     password: "",
     role: "user",
   });
+
+  const navigate = useNavigate()
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,13 +27,14 @@ const Signup = () => {
 
       const data = await res.json();
       if (res.ok) {
-        alert(data.message || "Signup successful!");
+        toast.success(data.message || "Signup successful!");
+        navigate("/login")
       } else {
-        alert(data.error || "Signup failed");
+        toast.error(data.error || "Signup failed");
       }
     } catch (error) {
       console.error(error);
-      alert("Something went wrong!");
+      toast.error("Something went wrong!");
     }
   };
 
