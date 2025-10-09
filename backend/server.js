@@ -41,7 +41,11 @@ app.use("/api/reviews", verifyJwt, reviewRoutes);
 
 // Server Configuration
 const PORT = process.env.PORT || 5000;
+const HOST = process.env.HOST || '0.0.0.0'; // Bind to all network interfaces
 
-app.listen(PORT,  () => {
-  console.log(` Local access: http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`🚀 Server running on http://${HOST}:${PORT}`);
+  console.log(`📡 Local access: http://localhost:${PORT}`);
+  console.log(`🌐 Network access: http://[YOUR_IP]:${PORT}`);
+  console.log(`💡 Team members can access using your local IP address`);
 });
