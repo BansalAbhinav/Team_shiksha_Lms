@@ -31,6 +31,7 @@ router.post("/signup", async (req, res) => {
 
 // Login route
 router.post("/login", async (req, res) => {
+    const JWT_SECRET = process.env.JWT_SECRET; 
     const {email, password} = req.body;
     try {
         const user = await User.findOne({email});
