@@ -1,30 +1,27 @@
-import { Router } from "express";
-
+import { Router } from 'express';
 const router = Router();
-import { addBook, getAllBooks, getBookById, updateBook, deleteBook, issueBook, returnBook } from "../controllers/bookController.js";
+import { createBook, getAllBooks, getBookById, updateBook, deleteBook, getCategories, getBooksByCategory, checkAvailability, issueBook, returnBook, getAllIssues, getIssueById, getOverdueBooks } from '../controllers/bookController';
 
-router.use("/",(req, res)=>{
-    res.json({message:"Testing"})
-})
-// 📘 Add a new book
-router.post("/add", addBook);
+// -------------------- BOOK ROUTES --------------------
+router.post('/books', createBook);
+router.get('/books', getAllBooks);
+router.get('/books/:id', getBookById);
+router.put('/books/:id', updateBook);
+router.delete('/books/:id', deleteBook);
 
-// 📚 Get all books
-router.get("/", getAllBooks);
+// Category & Filter
+router.get('/categories', getCategories);
+router.get('/books/category/:category', getBooksByCategory);
 
-// 🔍 Get a single book by ID
-router.get("/:id", getBookById);
+// Availability & Download
+router.get('/books/:id/availability', checkAvailability);
 
-// ✏️ Update book details
-router.put("/:id", updateBook);
 
-// 🗑️ Delete a book
-router.delete("/:id", deleteBook);
-
-// 📖 Issue a book to a user
-router.post("/issue", issueBook);
-
-// 🔁 Return a book and update availability
-router.post("/return", returnBook);
+// -------------------- ISSUE ROUTES --------------------
+router.post('/issues', issueBook);
+router.put('/issues/return', returnBook);
+router.get('/issues', getAllIssues);
+router.get('/issues/:id', getIssueById);
+router.get('/issues/overdue', getOverdueBooks);
 
 export default router;
