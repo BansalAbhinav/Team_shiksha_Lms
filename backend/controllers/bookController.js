@@ -160,14 +160,23 @@ export async function issueBook(req, res) {
     // 1️⃣ Check if user has ANY book currently issued (not returned)
     const existingIssue = await Issue.findOne({ userId, returned: false }).populate('bookId', 'title author');
     if (existingIssue) {
-      return res.status(400).json({ 
+      return res.status(409).json({ 
         success: false, 
-        message: `You already have a book issued: "${existingIssue.bookId.title}" by ${existingIssue.bookId.author}. Please return it first before issuing another book.`,
+        message: `Unable to issue new book. You currently have "${existingIssue.bookId.title}" by ${existingIssue.bookId.author} issued to you. Please return your current book before issuing another one.`,
+        error: 'ACTIVE_ISSUE_EXISTS',
         currentBook: {
           title: existingIssue.bookId.title,
           author: existingIssue.bookId.author,
-          issueDate: existingIssue.issueDate,
-          dueDate: existingIssue.dueDate
+          issueDate: existingIssue.issueDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          dueDate: existingIssue.dueDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })
         }
       });
     }
@@ -178,7 +187,13 @@ export async function issueBook(req, res) {
       { $inc: { availableQuantity: -1 } },
       { new: true }
     );
-    if (!book) return res.status(400).json({ success: false, message: "Book not available" });
+    if (!book) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "This book is currently unavailable. All copies have been issued or the book doesn't exist.",
+        error: 'BOOK_UNAVAILABLE'
+      });
+    }
 
     // 3️⃣ Set issue and due date with timezone handling
     const now = new Date();

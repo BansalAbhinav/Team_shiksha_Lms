@@ -34,7 +34,7 @@ function Navbar() {
           {isAuthenticated && (
             <Link to="/my-books" className={linkClass("/my-books")}>My Books</Link>
           )}
-          <Link to="/contact" className={linkClass("/contact")}>Contact</Link>
+          {/* <Link to="/contact" className={linkClass("/contact")}>Contact</Link> */}
           
           {isAuthenticated ? (
             <div className="relative">
