@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Books from "./pages/Books";
@@ -7,6 +8,7 @@ import Login from "./components/Auth/Login";
 import Signup from "./components/Auth/Signup";
 function App() {
   return (
+    <div>
     <Router>
       <div className="flex flex-col min-h-screen bg-gray-50 text-gray-800">
         <Navbar />
@@ -24,6 +26,8 @@ function App() {
         </footer>
       </div>
     </Router>
+    <ToastContainer autoClose={2000} position="top-center" />
+    </div>
   );
 }
 
