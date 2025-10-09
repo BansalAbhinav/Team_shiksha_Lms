@@ -5,7 +5,7 @@ const bookSchema = new Schema({
   author: { type: String, required: true, trim: true },
   category: { 
     type: String, 
-    enum: ["Fiction", "Non-Fiction", "Academic"], 
+    enum: ["Data Structures", "Operating Systems", "Artificial Intelligence"], 
     required: true 
   },
   totalQuantity: { type: Number, default: 3, min: 0 },

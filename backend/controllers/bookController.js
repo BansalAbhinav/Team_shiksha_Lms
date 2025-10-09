@@ -157,10 +157,20 @@ export async function issueBook(req, res) {
     const { bookId, issueType, groupSize } = req.body;
     const userId = req.user.id; // Get userId from JWT token
 
-    // 1️⃣ Check if the same user already issued this specific book (not any book)
-    const existingIssue = await Issue.findOne({ userId, bookId, returned: false });
-    if (existingIssue)
-      return res.status(400).json({ success: false, message: "User already has this book issued" });
+    // 1️⃣ Check if user has ANY book currently issued (not returned)
+    const existingIssue = await Issue.findOne({ userId, returned: false }).populate('bookId', 'title author');
+    if (existingIssue) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `You already have a book issued: "${existingIssue.bookId.title}" by ${existingIssue.bookId.author}. Please return it first before issuing another book.`,
+        currentBook: {
+          title: existingIssue.bookId.title,
+          author: existingIssue.bookId.author,
+          issueDate: existingIssue.issueDate,
+          dueDate: existingIssue.dueDate
+        }
+      });
+    }
 
     // 2️⃣ Check book availability and decrease quantity atomically
     const book = await Book.findOneAndUpdate(
@@ -170,18 +180,23 @@ export async function issueBook(req, res) {
     );
     if (!book) return res.status(400).json({ success: false, message: "Book not available" });
 
-    // 3️⃣ Set issue and due date
-    const issueDate = new Date();
-    const dueDate = new Date();
+    // 3️⃣ Set issue and due date with timezone handling
+    const now = new Date();
+    const issueDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Start of today
+    let dueDate;
 
     if (issueType === "individual") {
       if (groupSize && groupSize > 1)
         return res.status(400).json({ success: false, message: "Individual issue cannot have group size > 1" });
-      dueDate.setDate(dueDate.getDate() + 30);
+      // Add 30 days
+      dueDate = new Date(issueDate);
+      dueDate.setDate(issueDate.getDate() + 30);
     } else if (issueType === "group") {
       if (!groupSize || groupSize < 3 || groupSize > 6)
         return res.status(400).json({ success: false, message: "Group size must be 3–6" });
-      dueDate.setDate(dueDate.getDate() + 180);
+      // Add 180 days
+      dueDate = new Date(issueDate);
+      dueDate.setDate(issueDate.getDate() + 180);
     } else {
       return res.status(400).json({ success: false, message: "Invalid issue type" });
     }
@@ -309,7 +324,31 @@ export async function getMyIssues(req, res) {
       .populate('bookId', 'title author category cost')
       .sort({ issueDate: -1 });
 
-    res.status(200).json({ success: true, count: issues.length, data: issues });
+    // Fix any issues with past due dates (data cleanup)
+    const now = new Date();
+    const fixedIssues = issues.map(issue => {
+      const issueObj = issue.toObject();
+      const issueDate = new Date(issueObj.issueDate);
+      const dueDate = new Date(issueObj.dueDate);
+      
+      // If due date is before issue date, fix it
+      if (dueDate < issueDate && !issueObj.returned) {
+        const correctedDueDate = new Date(issueDate);
+        const daysToAdd = issueObj.issueType === 'individual' ? 30 : 180;
+        correctedDueDate.setDate(issueDate.getDate() + daysToAdd);
+        
+        console.log(`🔧 Fixing issue ${issueObj._id}: Due date was ${dueDate.toISOString()}, correcting to ${correctedDueDate.toISOString()}`);
+        
+        // Update in database
+        Issue.findByIdAndUpdate(issueObj._id, { dueDate: correctedDueDate }).exec();
+        
+        issueObj.dueDate = correctedDueDate;
+      }
+      
+      return issueObj;
+    });
+
+    res.status(200).json({ success: true, count: fixedIssues.length, data: fixedIssues });
   } catch (error) {
     res.status(500).json({ success: false, message: "Error fetching your issues", error: error.message });
   }
