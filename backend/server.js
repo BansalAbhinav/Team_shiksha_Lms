@@ -25,8 +25,9 @@ app.get("/api/test", (req, res) => {
   res.json({ message: "Backend is working!" });
 });
 
+// verifyJwt is not required for auth routes
 app.use("/api/auth", authRoutes);
-app.use("/api/books", bookRoutes);
+app.use("/api/books", verifyJwt, bookRoutes);
 // app.use("/api/penalty", penaltyRoutes);
 // app.use("/api/reviews", reviewRoutes);
 

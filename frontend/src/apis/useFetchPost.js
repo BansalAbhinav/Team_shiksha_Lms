@@ -6,7 +6,7 @@ export function useFetchPost(url) {
     const [error, setError] = useState(null);
     
     async function postData(JSONData) {
-        const token = sessionStorage.getItem("token");            
+        const token = localStorage.getItem("token");            
         const headers = {
             "Content-Type": "application/json",
         }
