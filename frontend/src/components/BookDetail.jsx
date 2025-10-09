@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { bookAPI } from '../apis/bookAPI';
+import { issueAPI } from '../apis/issueAPI';
 import { useAuth } from '../context/AuthContext';
 import IssueForm from './IssueForm';
 
@@ -12,10 +13,15 @@ const BookDetail = () => {
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showIssueForm, setShowIssueForm] = useState(false);
+  const [userActiveIssue, setUserActiveIssue] = useState(null);
+  const [checkingIssue, setCheckingIssue] = useState(false);
 
   useEffect(() => {
     fetchBook();
-  }, [id]);
+    if (isAuthenticated) {
+      checkUserActiveIssue();
+    }
+  }, [id, isAuthenticated]);
 
   const fetchBook = async () => {
     try {
@@ -31,12 +37,33 @@ const BookDetail = () => {
     }
   };
 
+  const checkUserActiveIssue = async () => {
+    if (!isAuthenticated) return;
+    
+    setCheckingIssue(true);
+    try {
+      const response = await issueAPI.getMyIssues();
+      const activeIssue = response.data.find(issue => !issue.returned);
+      setUserActiveIssue(activeIssue);
+    } catch (error) {
+      console.error('Error checking user active issues:', error);
+    } finally {
+      setCheckingIssue(false);
+    }
+  };
+
   const handleIssueBook = () => {
     if (!isAuthenticated) {
       toast.error('Please login to issue books');
       navigate('/login');
       return;
     }
+    
+    if (userActiveIssue) {
+      toast.error(`You already have a book issued: "${userActiveIssue.bookId?.title || 'Unknown'}". Please return it first.`);
+      return;
+    }
+    
     setShowIssueForm(true);
   };
 
@@ -90,9 +117,8 @@ console.log(book);
         <div className="md:flex">
           <div className="md:w-1/3 p-6">
             <div className="bg-gray-100 h-64 md:h-80 rounded-lg flex items-center justify-center">
-              <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
+              <img src="/book.png"></img>
+              
             </div>
           </div>
           
@@ -145,21 +171,41 @@ console.log(book);
                 Back to Books
               </button>
               
-              {isAuthenticated && book.data.availableQuantity > 0 && (
-                <button
-                  onClick={handleIssueBook}
-                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-200"
-                >
-                  Issue Book
-                </button>
-              )}
-              
-              {!isAuthenticated && (
+              {/* Show different states based on authentication and user's current issues */}
+              {!isAuthenticated ? (
                 <button
                   onClick={() => navigate('/login')}
                   className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition duration-200"
                 >
                   Login to Issue
+                </button>
+              ) : userActiveIssue ? (
+                <div className="flex flex-col">
+                  <button
+                    disabled
+                    className="bg-gray-400 text-white px-6 py-2 rounded-lg cursor-not-allowed opacity-60"
+                    title="You already have a book issued"
+                  >
+                    Already Issued a Book
+                  </button>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Return "{userActiveIssue.bookId?.title || 'your current book'}" first
+                  </p>
+                </div>
+              ) : book.data.availableQuantity > 0 ? (
+                <button
+                  onClick={handleIssueBook}
+                  disabled={checkingIssue}
+                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-200 disabled:opacity-50"
+                >
+                  {checkingIssue ? 'Checking...' : 'Issue Book'}
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="bg-gray-400 text-white px-6 py-2 rounded-lg cursor-not-allowed opacity-60"
+                >
+                  Out of Stock
                 </button>
               )}
             </div>
@@ -169,14 +215,14 @@ console.log(book);
 
       {showIssueForm && (
         <IssueForm
-  book={book.data}  // ✅ pass only the book data
-  onClose={() => setShowIssueForm(false)}
-  onSuccess={() => {
-    setShowIssueForm(false);
-    fetchBook(); // refresh after issuing
-  }}
-/>
-
+          book={book.data}  // ✅ pass only the book data
+          onClose={() => setShowIssueForm(false)}
+          onSuccess={() => {
+            setShowIssueForm(false);
+            fetchBook(); // refresh book availability
+            checkUserActiveIssue(); // refresh user's issue status
+          }}
+        />
       )}
     </div>
   );

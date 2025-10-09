@@ -31,7 +31,24 @@ const IssueForm = ({ book, onClose, onSuccess }) => {
       toast.success('Book issued successfully!');
       onSuccess();
     } catch (error) {
-      toast.error(error.message || 'Failed to issue book');
+      // Handle specific error for already issued book
+      if (error.response?.data?.currentBook) {
+        const currentBook = error.response.data.currentBook;
+        toast.error(
+          <div>
+            <div className="font-medium">{error.message}</div>
+            <div className="text-sm mt-1">
+              Current book: "{currentBook.title}" by {currentBook.author}
+            </div>
+            <div className="text-xs mt-1">
+              Due: {new Date(currentBook.dueDate).toLocaleDateString()}
+            </div>
+          </div>,
+          { autoClose: 8000 }
+        );
+      } else {
+        toast.error(error.message || 'Failed to issue book');
+      }
     } finally {
       setLoading(false);
     }
