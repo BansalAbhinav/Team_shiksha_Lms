@@ -7,7 +7,7 @@ import express, { json } from "express";
 import cors from "cors";
 import bookRoutes from "./routes/bookRoutes.js";
 import { router as authRoutes, verifyJwt } from "./routes/authRoutes.js";
-
+import reviewRoutes from "./routes/reviewRoutes.js"
 // Import routes (you’ll implement later)
 // import penaltyRoutes from "./routes/penaltyRoutes.js";
 // import reviewRoutes from "./routes/reviewRoutes.js";
@@ -15,7 +15,15 @@ import { router as authRoutes, verifyJwt } from "./routes/authRoutes.js";
 
 const app = express();
 
-app.use(cors());
+// Enhanced CORS configuration for team access
+app.use(cors({
+  origin: (origin, callback) => {
+    callback(null, true); // allow all origins dynamically
+  },
+  credentials: true,
+}));
+
+
 app.use(json());
 app.get("/api/test", (req, res) => {
   res.json({ message: "Backend is working!" });
@@ -44,9 +52,15 @@ app.get("/api/test-dates", (req, res) => {
 
 // verifyJwt is not required for auth routes
 app.use("/api/auth", authRoutes);
-app.use("/api", bookRoutes);
-// app.use("/api/penalty", penaltyRoutes);
-// app.use("/api/reviews",reviewRoutes);
+app.use("/api",verifyJwt, bookRoutes);
+app.use("/api/reviews",verifyJwt, reviewRoutes);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+const HOST = process.env.HOST || '0.0.0.0'; // Bind to all interfaces
+
+app.listen(PORT, HOST, () => {
+  console.log(`🚀 Server running on http://${HOST}:${PORT}`);
+  console.log(`📡 Local access: http://localhost:${PORT}`);
+  console.log(`🌐 Network access: http://[YOUR_IP]:${PORT}`);
+  console.log(`💡 Team members can access using your local IP address`);
+});
