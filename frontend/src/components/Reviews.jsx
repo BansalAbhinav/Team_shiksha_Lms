@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Star,
   ThumbsUp,
@@ -7,66 +7,139 @@ import {
   TrendingUp,
   Edit3,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { reviewAPI } from "../apis/reviewApi";
+import { toast } from "react-toastify";
 
 function Reviews() {
-  const [activeTab, setActiveTab] = useState("reviews");
+  const { isAuthenticated, user } = useAuth();
   const [showWriteReview, setShowWriteReview] = useState(false);
   const [userRating, setUserRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
+  const [reviewTitle, setReviewTitle] = useState("");
   const [sortBy, setSortBy] = useState("recent");
 
+  const [reviews, setReviews] = useState([]);
+
   // Sample reviews data
-  const reviews = [
-    {
-      id: 1,
-      user: "Rahul Kumar",
-      rating: 5,
-      date: "2 days ago",
-      comment:
-        "Excellent book for understanding data structures. The examples are clear and well-explained. Highly recommended for beginners!",
-      helpful: 24,
-      avatar: "RK",
-    },
-    {
-      id: 2,
-      user: "Priya Sharma",
-      rating: 4,
-      date: "1 week ago",
-      comment:
-        "Great content but could use more practical examples. Overall a solid resource for learning.",
-      helpful: 15,
-      avatar: "PS",
-    },
-    {
-      id: 3,
-      user: "Amit Patel",
-      rating: 5,
-      date: "2 weeks ago",
-      comment:
-        "One of the best books on data structures. Pat Morin explains concepts in a very intuitive way.",
-      helpful: 31,
-      avatar: "AP",
-    },
-  ];
+  // const reviews = [
+  //   {
+  //     id: 1,
+  //     user: "Rahul Kumar",
+  //     rating: 5,
+  //     date: "2 days ago",
+  //     comment:
+  //       "Excellent book for understanding data structures. The examples are clear and well-explained. Highly recommended for beginners!",
+  //     helpful: 24,
+  //     avatar: "RK",
+  //   },
+  //   {
+  //     id: 2,
+  //     user: "Priya Sharma",
+  //     rating: 4,
+  //     date: "1 week ago",
+  //     comment:
+  //       "Great content but could use more practical examples. Overall a solid resource for learning.",
+  //     helpful: 15,
+  //     avatar: "PS",
+  //   },
+  //   {
+  //     id: 3,
+  //     user: "Amit Patel",
+  //     rating: 5,
+  //     date: "2 weeks ago",
+  //     comment:
+  //       "One of the best books on data structures. Pat Morin explains concepts in a very intuitive way.",
+  //     helpful: 31,
+  //     avatar: "AP",
+  //   },
+  // ];
+
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (bookId) {
+      fetchReviews();
+      fetchAverageRating();
+    }
+  }, [bookId]);
+
+  const fetchReviews = async () => {
+    try {
+      const data = await reviewAPI.getReviewsByBookId(bookId);
+      setReviews(data);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      toast.error("Failed to load reviews. Please try again later.");
+    }
+  };
+
+  const fetchAverageRating = async () => {
+    try {
+      const data = await reviewAPI.getAverageRating(bookId);
+      setStats((prev) => ({
+        ...prev,
+        averageRating: data.averageRating,
+        totalReviews: data.totalReviews,
+      }));
+    } catch (error) {
+      console.error("Error fetching average rating:", error);
+    }
+  };
 
   const stats = {
-    averageRating: 4.6,
-    totalReviews: 127,
+    averageRating: 0,
+    totalReviews: 0,
     ratings: {
-      5: 89,
-      4: 28,
-      3: 7,
-      2: 2,
-      1: 1,
+      5: 0,
+      4: 0,
+      3: 0,
+      2: 0,
+      1: 0,
     },
   };
 
-  const handleSubmitReview = () => {
-    if (userRating && reviewText.trim()) {
-      console.log("Rating:", userRating, "Review:", reviewText);
+  const handleSubmitReview = async () => {
+    if (!isAuthenticated) {
+      toast.error("You must be logged in to submit a review.");
+      return;
+    }
+
+    if (!userRating || reviewText.trim().length < 50 || !reviewTitle.trim()) {
+      toast.error(
+        "Please fill all required fields (minimum 50 characters for review)"
+      );
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await reviewAPI.addReview({
+        bookId: bookId,
+        userId: user._id,
+        title: reviewTitle,
+        description: reviewText,
+        rating: userRating
+      });
+
+      toast.success("Review submitted successfully!");
+
       setUserRating(0);
       setReviewText("");
+      setReviewTitle("");
+      setShowWriteReview(false);
+      fetchReviews();
+      fetchAverageRating();
+
+  } catch (error) {
+      console.error("Error submitting review:", error);
+      toast.error(error.response?.data?.message || 'Failed to submit review');
+    }
+    finally {
+      setSubmitting(false);
+      setShowWriteReview(false);
+
     }
   };
 
