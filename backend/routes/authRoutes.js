@@ -6,7 +6,6 @@ import pkg from 'jsonwebtoken';
 import User from "../models/User.js";
 import { genSalt, hash } from "bcrypt";
 
-const JWT_SECRET = process.env.JWT_SECRET;
 const { sign, verify } = pkg;
 // Signup route
 router.post("/signup", async (req, res) => {
@@ -44,11 +43,12 @@ router.post("/login", async (req, res) => {
             return res.status(400).json({"error": "Invalid Credentials."});
         }
 
-        const token = sign({id: user._id}, JWT_SECRET, {expiresIn: "4h"});
+        const token = sign({id: user._id}, process.env.JWT_SECRET, {expiresIn: "4h"});
 
         res.status(200).json({"message": "Login successful", email: user.email, token})
 
     } catch (error) {
+        console.error("Login error:", error);
         res.status(500).json({"error": "Failed to login"});
     }
 });
@@ -61,7 +61,7 @@ const verifyJwt = (req, res, next) => {
     }
     const token = authHeader.split(" ")[1];
     try {
-        const decodedToken = verify(token, JWT_SECRET);
+        const decodedToken = verify(token, process.env.JWT_SECRET);
         req.user = decodedToken;
         next();
     } catch (error) {
