@@ -1,5 +1,6 @@
-import Book from '../models/book';
-import Issue from '../models/issue';
+import Book from '../models/Book.js';
+import Issue from '../models/Issue.js';
+
 
 // -------------------- BOOK CONTROLLERS --------------------
 
@@ -52,20 +53,43 @@ export async function getBookById(req, res) {
 }
 
 // Update book
+
 export async function updateBook(req, res) {
   try {
-    const { title, author, category, cost, pdfLink, totalQuantity } = req.body;
+    const updateData = {};
+
+    // Dynamically add only provided fields
+    const allowedFields = ["title", "author", "category", "cost", "pdfLink", "totalQuantity"];
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    }
+
     const book = await Book.findByIdAndUpdate(
       req.params.id,
-      { title, author, category, cost, pdfLink, totalQuantity },
+      { $set: updateData },
       { new: true, runValidators: true }
     );
-    if (!book) return res.status(404).json({ success: false, message: "Book not found" });
-    res.status(200).json({ success: true, message: "Book updated successfully", data: book });
+
+    if (!book) {
+      return res.status(404).json({ success: false, message: "Book not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Book updated successfully",
+      data: book,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Error updating book", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Error updating book",
+      error: error.message,
+    });
   }
 }
+
 
 // Delete book
 export async function deleteBook(req, res) {
@@ -130,14 +154,15 @@ export async function checkAvailability(req, res) {
 // Issue a book
 export async function issueBook(req, res) {
   try {
-    const { userId, bookId, issueType, groupSize } = req.body;
+    const { bookId, issueType, groupSize } = req.body;
+    const userId = req.user.id; // Get userId from JWT token
 
-    // 1️⃣ Check if user already has an active book
-    const existingIssue = await Issue.findOne({ userId, returned: false });
+    // 1️⃣ Check if the same user already issued this specific book (not any book)
+    const existingIssue = await Issue.findOne({ userId, bookId, returned: false });
     if (existingIssue)
-      return res.status(400).json({ success: false, message: "User already has an active book issued" });
+      return res.status(400).json({ success: false, message: "User already has this book issued" });
 
-    // 2️⃣ Check book availability
+    // 2️⃣ Check book availability and decrease quantity atomically
     const book = await Book.findOneAndUpdate(
       { _id: bookId, availableQuantity: { $gt: 0 } },
       { $inc: { availableQuantity: -1 } },
@@ -155,12 +180,14 @@ export async function issueBook(req, res) {
       dueDate.setDate(dueDate.getDate() + 30);
     } else if (issueType === "group") {
       if (!groupSize || groupSize < 3 || groupSize > 6)
-        return res.status(400).json({ success: false, message: "Group size must be 3-6" });
+        return res.status(400).json({ success: false, message: "Group size must be 3–6" });
       dueDate.setDate(dueDate.getDate() + 180);
-    } else return res.status(400).json({ success: false, message: "Invalid issue type" });
+    } else {
+      return res.status(400).json({ success: false, message: "Invalid issue type" });
+    }
 
     // 4️⃣ Save issue record
-    const issue = new Issue({ userId, bookId, issueType, issueDate, dueDate });
+    const issue = new Issue({ userId, bookId, issueType, groupSize, issueDate, dueDate });
     await issue.save();
 
     res.status(201).json({
@@ -172,6 +199,7 @@ export async function issueBook(req, res) {
     res.status(500).json({ success: false, message: "Error issuing book", error: error.message });
   }
 }
+
 
 // Return a book + fine logic
 export async function returnBook(req, res) {
@@ -269,5 +297,20 @@ export async function getOverdueBooks(req, res) {
     res.status(200).json({ success: true, count: overdueIssues.length, data: overdueIssues });
   } catch (error) {
     res.status(500).json({ success: false, message: "Error fetching overdue books", error: error.message });
+  }
+}
+
+// Get current user's issues
+export async function getMyIssues(req, res) {
+  try {
+    const userId = req.user.id; // Get userId from JWT token
+    
+    const issues = await Issue.find({ userId })
+      .populate('bookId', 'title author category cost')
+      .sort({ issueDate: -1 });
+
+    res.status(200).json({ success: true, count: issues.length, data: issues });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error fetching your issues", error: error.message });
   }
 }
