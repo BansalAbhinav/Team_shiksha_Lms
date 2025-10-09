@@ -31,37 +31,77 @@ router.post("/signup", async (req, res) => {
 
 // Login route
 router.post("/login", async (req, res) => {
-    const JWT_SECRET = process.env.JWT_SECRET; 
-    const {email, password} = req.body;
     try {
-        const user = await User.findOne({email});
+        console.log("🔐 Login attempt received");
+        console.log("Request body:", req.body);
+        
+        const { email, password } = req.body;
+        
+        // Validate input
+        if (!email || !password) {
+            console.log("Missing email or password");
+            return res.status(400).json({ 
+                success: false, 
+                error: "Email and password are required" 
+            });
+        }
+
+        // Check if JWT_SECRET is available
+        if (!process.env.JWT_SECRET) {
+            console.error("JWT_SECRET is not set in environment variables");
+            return res.status(500).json({ 
+                success: false, 
+                error: "Server configuration error" 
+            });
+        }
+
+        console.log("🔍 Looking for user with email:", email);
+        
+        const user = await User.findOne({ email });
         if (!user) {
-            return res.status(404).json({"error": "User not found."});
+            console.log("User not found:", email);
+            return res.status(404).json({ 
+                success: false, 
+                error: "User not found" 
+            });
         }
 
+        console.log("✅ User found, comparing passwords...");
         const isPasswordMatched = await user.comparePassword(password);
+        console.log("🔑 Password match result:", isPasswordMatched);
 
-        if (isPasswordMatched === false) {
-            return res.status(400).json({"error": "Invalid Credentials."});
+        if (!isPasswordMatched) {
+            console.log("Password mismatch for user:", email);
+            return res.status(400).json({ 
+                success: false, 
+                error: "Invalid credentials" 
+            });
         }
 
-        const token = sign({id: user._id}, process.env.JWT_SECRET, {expiresIn: "4h"});
+        console.log("✅ Password matched, generating token...");
+        const token = sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "4h" });
 
+        console.log("Login successful for user:", email);
         res.status(200).json({
-            "message": "Login successful", 
-            "email": user.email, 
-            "token": token,
-            "user": {
-                "id": user._id,
-                "name": user.name,
-                "email": user.email,
-                "role": user.role
+            success: true,
+            message: "Login successful", 
+            email: user.email, 
+            token: token,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
             }
-        })
+        });
 
     } catch (error) {
         console.error("Login error:", error);
-        res.status(500).json({"error": "Failed to login"});
+        res.status(500).json({ 
+            success: false, 
+            error: "Failed to login",
+            details: error.message 
+        });
     }
 });
 

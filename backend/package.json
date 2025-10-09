@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "get-ip": "node get-ip.js",
+    "test-connection": "node test-connection.js",
+    "team-setup": "node get-ip.js && echo 'Share the IP address above with your team members!'"
   },
   "keywords": [],
   "author": "",
