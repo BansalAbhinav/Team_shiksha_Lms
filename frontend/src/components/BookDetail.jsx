@@ -169,13 +169,14 @@ console.log(book);
 
       {showIssueForm && (
         <IssueForm
-          book={book}
-          onClose={() => setShowIssueForm(false)}
-          onSuccess={() => {
-            setShowIssueForm(false);
-            fetchBook(); // Refresh book data
-          }}
-        />
+  book={book.data}  // ✅ pass only the book data
+  onClose={() => setShowIssueForm(false)}
+  onSuccess={() => {
+    setShowIssueForm(false);
+    fetchBook(); // refresh after issuing
+  }}
+/>
+
       )}
     </div>
   );
