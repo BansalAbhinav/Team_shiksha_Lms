@@ -19,8 +19,18 @@ const MyBooks = () => {
   const fetchMyIssues = async () => {
     try {
       const response = await issueAPI.getMyIssues();
-      console.log('API Response:', response);
-      setIssues(response.data || response);
+      console.log('📚 API Response:', response);
+      const issuesData = response.data || response;
+      console.log('📅 Issues Data:', issuesData);
+      if (issuesData.length > 0) {
+        console.log('📅 Sample issue dates:', {
+          issueDate: issuesData[0].issueDate,
+          dueDate: issuesData[0].dueDate,
+          dueDateParsed: new Date(issuesData[0].dueDate).toLocaleDateString(),
+          isOverdue: new Date(issuesData[0].dueDate) < new Date()
+        });
+      }
+      setIssues(issuesData);
     } catch (error) {
       console.error('Error fetching issues:', error);
       toast.error('Failed to fetch your books');
@@ -65,12 +75,53 @@ const MyBooks = () => {
     return 'Active';
   };
 
+  const formatDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.error('Invalid date:', dateString);
+        return 'Invalid Date';
+      }
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return 'Invalid Date';
+    }
+  };
+
   const getDaysUntilDue = (dueDate) => {
-    const today = new Date();
-    const due = new Date(dueDate);
-    const diffTime = due - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time to start of day
+      const due = new Date(dueDate);
+      due.setHours(23, 59, 59, 999); // Set to end of due date
+      
+      // Validate dates
+      if (isNaN(today.getTime()) || isNaN(due.getTime())) {
+        console.error('Invalid dates in calculation:', { today, due, dueDate });
+        return 0;
+      }
+      
+      const diffTime = due - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      console.log('📅 Date calculation:', {
+        today: today.toLocaleDateString(),
+        due: due.toLocaleDateString(),
+        diffDays,
+        dueDate
+      });
+      
+      return diffDays;
+    } catch (error) {
+      console.error('Date calculation error:', error);
+      return 0;
+    }
   };
 
   const filteredIssues = issues.filter(issue => {
@@ -167,16 +218,16 @@ const MyBooks = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
                       <span className="text-gray-500">Issued:</span>
-                      <p className="font-medium">{new Date(issue.issueDate).toLocaleDateString()}</p>
+                      <p className="font-medium">{formatDate(issue.issueDate)}</p>
                     </div>
                     <div>
                       <span className="text-gray-500">Due:</span>
-                      <p className="font-medium">{new Date(issue.dueDate).toLocaleDateString()}</p>
+                      <p className="font-medium">{formatDate(issue.dueDate)}</p>
                     </div>
                     {issue.returned && (
                       <div>
                         <span className="text-gray-500">Returned:</span>
-                        <p className="font-medium">{new Date(issue.returnDate).toLocaleDateString()}</p>
+                        <p className="font-medium">{formatDate(issue.returnDate)}</p>
                       </div>
                     )}
                     {issue.fine > 0 && (
@@ -189,15 +240,29 @@ const MyBooks = () => {
 
                   {!issue.returned && (
                     <div className="mt-2">
-                      {new Date(issue.dueDate) < new Date() ? (
-                        <p className="text-red-600 font-medium">
-                          Overdue by {Math.ceil((new Date() - new Date(issue.dueDate)) / (1000 * 60 * 60 * 24))} days
-                        </p>
-                      ) : (
-                        <p className="text-gray-600">
-                          Due in {getDaysUntilDue(issue.dueDate)} days
-                        </p>
-                      )}
+                      {(() => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const dueDate = new Date(issue.dueDate);
+                        dueDate.setHours(0, 0, 0, 0);
+                        const isOverdue = today > dueDate;
+                        
+                        if (isOverdue) {
+                          const daysOverdue = Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24));
+                          return (
+                            <p className="text-red-600 font-medium">
+                              Overdue by {daysOverdue} days
+                            </p>
+                          );
+                        } else {
+                          const daysUntilDue = getDaysUntilDue(issue.dueDate);
+                          return (
+                            <p className="text-gray-600">
+                              Due in {daysUntilDue} days
+                            </p>
+                          );
+                        }
+                      })()}
                     </div>
                   )}
                 </div>
