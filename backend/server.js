@@ -1,7 +1,13 @@
-import express, { json } from "express";
+
 import { config } from "dotenv";
-import cors from "cors";
 import connectDB from "./config/db.js";
+
+config();
+connectDB();
+
+import express, { json } from "express";
+import cors from "cors";
+
 import bookRoutes from "./routes/bookRoutes.js";
 import { router as authRoutes, verifyJwt } from "./routes/authRoutes.js";
 
@@ -9,8 +15,6 @@ import { router as authRoutes, verifyJwt } from "./routes/authRoutes.js";
 // import penaltyRoutes from "./routes/penaltyRoutes.js";
 // import reviewRoutes from "./routes/reviewRoutes.js";
 
-config();
-connectDB();
 
 const app = express();
 
