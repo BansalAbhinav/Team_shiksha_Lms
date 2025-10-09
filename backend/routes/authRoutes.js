@@ -9,6 +9,7 @@ import { genSalt, hash } from "bcrypt";
 const { sign, verify } = pkg;
 // Signup route
 router.post("/signup", async (req, res) => {
+       const JWT_SECRET = process.env.JWT_SECRET; 
     const {name, email, password, role} = req.body;
     try {
         const isExistingUser = await User.findOne({email});
@@ -56,6 +57,7 @@ router.post("/login", async (req, res) => {
 
 // Middleware for protecting other routes
 const verifyJwt = (req, res, next) => {
+    
     const authHeader = req.headers["authorization"];
     if (!authHeader) {
         return res.status(401).json({"error": "No token provided"});
