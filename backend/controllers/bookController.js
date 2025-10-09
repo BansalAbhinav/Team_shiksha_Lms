@@ -16,6 +16,7 @@ export async function addBook(req, res) {
 export async function getAllBooks(req, res) {
   try {
     const books = await Book.find();
+    console.log("books", books)
     res.json(books);
   } catch (error) {
     res.status(500).json({ message: "Error fetching books", error: error.message });

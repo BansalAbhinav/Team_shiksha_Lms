@@ -1,10 +1,14 @@
 import React, { useState } from "react";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -22,14 +26,18 @@ const Login = () => {
       const data = await res.json();
 
       if (res.ok) {
-        alert(data.message || "Login successful!");
+        toast.info(data.message || "Login successful!");
         localStorage.setItem("token", data.token);
+        localStorage.setItem("email", data.email);
+        if (data.token) {
+          navigate("/books");
+        }
       } else {
-        alert(data.error || "Login failed");
+        toast.error(data.error || "Login failed");
       }
     } catch (error) {
       console.error(error);
-      alert("Something went wrong!");
+      toast.error("Something went wrong!");
     }
   };
 

@@ -16,6 +16,8 @@ function Navbar() {
         <h1 className="text-xl font-semibold text-indigo-700">Team Shiksha LMS</h1>
         <div className="flex space-x-4">
           <Link to="/" className={linkClass("/")}>Home</Link>
+          <Link to="/signup" className={linkClass("/signup")}>Signup</Link>
+          <Link to="/login" className={linkClass("/login")}>Login</Link>
           <Link to="/books" className={linkClass("/books")}>Books</Link>
           <Link to="/contact" className={linkClass("/contact")}>Contact</Link>
         </div>
