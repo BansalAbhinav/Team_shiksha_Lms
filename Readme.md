@@ -30,6 +30,10 @@ This is a full-stack Library Management System designed to streamline the manage
 
 ---
 
+🎥 **Project Demo:** [Watch the Demo](https://youtu.be/a8zIaxHX7_Q)
+
+
+
 ## ✨ Tech Stack
 
 ### Backend
