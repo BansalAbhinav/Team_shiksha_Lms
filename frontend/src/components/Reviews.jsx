@@ -467,7 +467,7 @@ function Reviews({ bookId }) {
               <h3 className="text-lg font-semibold text-gray-800">
                 User Reviews
               </h3>
-              <select
+              {/* <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -476,7 +476,7 @@ function Reviews({ bookId }) {
                 <option value="helpful">Most Helpful</option>
                 <option value="highest">Highest Rating</option>
                 <option value="lowest">Lowest Rating</option>
-              </select>
+              </select> */}
             </div>
 
             {reviews.length === 0 ? (
