@@ -1,22 +1,25 @@
 import { Router } from "express";
-import { 
-  addReview, 
-  deleteReview, 
-  getBookAverageRating, 
-  getReviewsByBookId, 
+import {
+  addReview,
+  deleteReview,
+  getBookAverageRating,
+  getReviewsByBookId,
   getReviewsByUser,
   getReviewById,
-  updateReview 
+  updateReview,
 } from "../controllers/reviewController.js";
+import { verifyJwt } from "./authRoutes.js";
 
 const router = Router();
 
-router.post("/add", addReview);
 router.get("/book/:bookId", getReviewsByBookId);
-router.get("/user/:userId", getReviewsByUser);       
-router.get("/review/:reviewId", getReviewById);      
+router.get("/review/:reviewId", getReviewById);
 router.get("/average/:bookId", getBookAverageRating);
-router.put("/:id", updateReview);
-router.delete("/:id", deleteReview);
+
+router.post("/add", verifyJwt, addReview);
+router.get("/user/:userId", verifyJwt, getReviewsByUser);
+router.put("/:id", verifyJwt, updateReview);
+router.delete("/:id", verifyJwt, deleteReview);
+
 
 export default router;

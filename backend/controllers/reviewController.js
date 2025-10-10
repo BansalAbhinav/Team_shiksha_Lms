@@ -1,11 +1,10 @@
 import Review from "../models/Review.js";
-import Book from '../models/Book.js';
+import Book from "../models/Book.js";
 import User from "../models/User.js";
 
 export async function addReview(req, res) {
   try {
-    const userId =
-      req.user?._id?.toString() || req.body.userId || req.body.user;
+    const userId = req.user?.id || req.user?._id;
     const bookId = req.body.bookId;
     const { title, description, image, rating } = req.body;
 
@@ -21,7 +20,15 @@ export async function addReview(req, res) {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found",
+        message: "Authentication Required: User not found",
+      });
+    }
+
+    const existingReview = await Review.findOne({ bookId, userId });
+    if (existingReview) {
+      return res.status(400).json({
+        success: false,
+        message: "You have already reviewed this book.",
       });
     }
 
@@ -58,7 +65,7 @@ export async function getReviewsByBookId(req, res) {
       .populate("userId", "name email")
       .sort({ createdAt: -1 });
 
-    res.json(reviews);
+    return res.status(200).json(reviews);
   } catch (error) {
     console.error("Error fetching reviews:", error);
     return res.status(500).json({
@@ -111,37 +118,34 @@ export async function getReviewById(req, res) {
   }
 }
 
-
 export async function updateReview(req, res) {
-    try {
-        const { title, description, image, rating } = req.body;
+  try {
+    const { title, description, image, rating } = req.body;
 
-        const review = await Review.findById(req.params.id);
+    const review = await Review.findById(req.params.id);
 
-        if (!review) {
-            return res.status(404).json({ message: "Review not found" });
-        }
-
-        const updateReview = await Review.findByIdAndUpdate(
-            req.params.id,
-            { title, description, image, rating },
-            { new: true , runValidators: true}
-        );
-
-        res.json({
-            message: "Review updated successfully",
-            review: updateReview,
-        })
-    } catch (error) {
-        console.error("Error updating review:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error",
-        });
+    if (!review) {
+      return res.status(404).json({ message: "Review not found" });
     }
+
+    const updateReview = await Review.findByIdAndUpdate(
+      req.params.id,
+      { title, description, image, rating },
+      { new: true, runValidators: true }
+    );
+
+    res.json({
+      message: "Review updated successfully",
+      review: updateReview,
+    });
+  } catch (error) {
+    console.error("Error updating review:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
 }
-
-
 
 export async function deleteReview(req, res) {
   try {
@@ -151,13 +155,12 @@ export async function deleteReview(req, res) {
     await Review.findByIdAndDelete(req.params.id);
     res.json({ message: "Review deleted successfully" });
   } catch (error) {
-    res.status(500).json({ 
-      message: "Error deleting review", 
-      error: error.message 
+    res.status(500).json({
+      message: "Error deleting review",
+      error: error.message,
     });
   }
 }
-
 
 export async function getBookAverageRating(req, res) {
   try {
@@ -166,23 +169,23 @@ export async function getBookAverageRating(req, res) {
     const reviews = await Review.find({ bookId });
 
     if (reviews.length === 0) {
-      return res.json({ 
-        averageRating: 0, 
-        totalReviews: 0 
+      return res.json({
+        averageRating: 0,
+        totalReviews: 0,
       });
     }
 
     const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
     const averageRating = (totalRating / reviews.length).toFixed(1);
 
-    res.json({ 
-      averageRating: parseFloat(averageRating), 
-      totalReviews: reviews.length 
+    res.json({
+      averageRating: parseFloat(averageRating),
+      totalReviews: reviews.length,
     });
   } catch (error) {
-    res.status(500).json({ 
-      message: "Error calculating average rating", 
-      error: error.message 
+    res.status(500).json({
+      message: "Error calculating average rating",
+      error: error.message,
     });
   }
 }
