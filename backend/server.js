@@ -36,7 +36,7 @@ app.get("/api/test", (req, res) => {
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api", bookRoutes);
-app.use("/api/reviews", verifyJwt, reviewRoutes);
+app.use("/api/reviews", reviewRoutes);
 // app.use("/api/penalty", penaltyRoutes); // optional
 
 // Server Configuration

@@ -9,7 +9,7 @@ const BookDetailPage = () => {
   return (
     <>
       <BookDetail />
-      <Reviews />
+      <Reviews bookId={id} />
     </>
   );
 };
