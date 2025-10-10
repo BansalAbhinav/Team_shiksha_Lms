@@ -20,6 +20,16 @@ This is a full-stack Library Management System designed to streamline the manage
 
 **💰 Fine Management**: Automated fine calculation for overdue books with damage assessment capabilities.
 
+
+---
+
+**🎯 Project Status**: Active Development  
+**🌐 Live Application**: [Team Shiksha LMS](https://team-shiksha-lms-2tt7.vercel.app/)  
+**🔗 Backend API**: [API Server](https://team-shiksha-lms.onrender.com/)  
+**📧 Support**: Contact us through the Contact page in the application
+
+---
+
 ## ✨ Tech Stack
 
 ### Backend
@@ -274,22 +284,11 @@ npm run lint     # Run ESLint
 
 This project is licensed under the ISC License - see the package.json files for details.
 
-## 👨‍💻 Authors
-
-- **Abhinav Bansal** - [@BansalAbhinav](https://github.com/BansalAbhinav)
-
 ## 🙏 Acknowledgments
 
 - Thanks to all contributors who have helped with this project
 - Inspired by modern library management needs
 - Built with love for the education community
-
----
-
-**🎯 Project Status**: Active Development  
-**🌐 Live Application**: [Team Shiksha LMS](https://team-shiksha-lms-2tt7.vercel.app/)  
-**🔗 Backend API**: [API Server](https://team-shiksha-lms.onrender.com/)  
-**📧 Support**: Contact us through the Contact page in the application
 
 ---
 
