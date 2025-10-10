@@ -303,20 +303,21 @@ function Reviews({ bookId }) {
                 .map(([rating, count]) => {
                   const percentage = (count / stars.totalReviews) * 100;
                   return (
-                    <div key={rating} className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-gray-700 w-8">
-                        {rating}★
-                      </span>
-                      <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-yellow-400 transition-all"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                      <span className="text-sm text-gray-600 w-12">
-                        {count}
-                      </span>
-                    </div>
+                    <></>
+                    // <div key={rating} className="flex items-center gap-3">
+                    //   <span className="text-sm font-medium text-gray-700 w-8">
+                    //     {rating}★
+                    //   </span>
+                    //   <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    //     <div
+                    //       className="h-full bg-yellow-400 transition-all"
+                    //       style={{ width: `${percentage}%` }}
+                    //     />
+                    //   </div>
+                    //   <span className="text-sm text-gray-600 w-12">
+                    //     {count}
+                    //   </span>
+                    // </div>
                   );
                 })}
             </div>
