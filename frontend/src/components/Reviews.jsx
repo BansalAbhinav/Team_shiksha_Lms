@@ -61,6 +61,22 @@ function Reviews({ bookId }) {
 
   const [submitting, setSubmitting] = useState(false);
 
+  const [editingReview, setEditingReview] = useState(null);
+  const [editRating, setEditRating] = useState(0);
+  const [editText, setEditText] = useState("");
+  const [editTitle, setEditTitle] = useState("");
+  const [showDropdown, setShowDropdown] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleEditClick = (review) => {
+    setEditingReview(review);
+    setEditRating(review.rating);
+    setEditText(review.description);
+    setEditTitle(review.title);
+    setShowDropdown(null);
+  };
+
   useEffect(() => {
     if (bookId) {
       fetchReviews();
@@ -103,15 +119,92 @@ function Reviews({ bookId }) {
     },
   });
 
+  const handleUpdateReview = async () => {
+    if (!editRating || editText.trim().length < 10 || !editTitle.trim()) {
+      toast.error(
+        "Please fill all required fields (minimum 10 characters for review)"
+      );
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      await reviewAPI.updateReview(editingReview._id, {
+        title: editTitle,
+        description: editText,
+        rating: editRating,
+      });
+
+      toast.success("Review updated successfully!");
+
+      setReviews((prevReviews) =>
+        prevReviews.map((review) =>
+          review._id === editingReview._id
+            ? {
+                ...review,
+                title: editTitle,
+                description: editText,
+                rating: editRating,
+                updatedAt: new Date().toISOString(),
+              }
+            : review
+        )
+      );
+
+      setEditingReview(null);
+      setEditRating(0);
+      setEditText("");
+      setEditTitle("");
+
+      fetchAverageRating();
+    } catch (error) {
+      console.error("Error updating review:", error);
+      toast.error(error.response?.data?.message || "Failed to update review");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    try {
+      setIsDeleting(true);
+
+      await reviewAPI.deleteReview(reviewId);
+
+      toast.success("Review deleted successfully!");
+
+      setReviews((prevReviews) =>
+        prevReviews.filter((review) => review._id !== reviewId)
+      );
+
+      setShowDeleteConfirm(null);
+      setShowDropdown(null);
+
+      fetchAverageRating();
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      toast.error(error.response?.data?.message || "Failed to delete review");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = () => setShowDropdown(null);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
   const handleSubmitReview = async () => {
     if (!isAuthenticated) {
       toast.error("You must be logged in to submit a review.");
       return;
     }
 
-    if (!userRating || reviewText.trim().length < 50 || !reviewTitle.trim()) {
+    if (!userRating || reviewText.trim().length < 10 || !reviewTitle.trim()) {
       toast.error(
-        "Please fill all required fields (minimum 50 characters for review)"
+        "Please fill all required fields (minimum 10 characters for review)"
       );
       return;
     }
@@ -315,7 +408,7 @@ function Reviews({ bookId }) {
                         rows="6"
                       />
                       <p className="text-xs text-gray-500 mt-2">
-                        Minimum 50 characters. Be specific and honest to help
+                        Minimum 10 characters. Be specific and honest to help
                         other students.
                       </p>
                     </div>
@@ -325,7 +418,7 @@ function Reviews({ bookId }) {
                         onClick={handleSubmitReview}
                         disabled={
                           !userRating ||
-                          reviewText.trim().length < 50 ||
+                          reviewText.trim().length < 10 ||
                           !reviewTitle.trim() ||
                           submitting
                         }
@@ -415,6 +508,12 @@ function Reviews({ bookId }) {
                   ? user.name?.charAt(0) || "Y"
                   : review.userId?.name?.charAt(0) || "U";
 
+                const isEdited =
+                  review.updatedAt && review.updatedAt !== review.createdAt;
+                const displayDate = isEdited
+                  ? `Edited ${new Date(review.updatedAt).toLocaleDateString()}`
+                  : new Date(review.createdAt).toLocaleDateString();
+
                 return (
                   <div
                     key={review._id}
@@ -433,7 +532,7 @@ function Reviews({ bookId }) {
 
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
-                          <div>
+                          <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <h4 className="font-semibold text-gray-800">
                                 {displayName}
@@ -453,6 +552,52 @@ function Reviews({ bookId }) {
                               </span>
                             </div>
                           </div>
+                          {isCurrentUserReview && (
+                            <div className="relative">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setShowDropdown(
+                                    showDropdown === review._id
+                                      ? null
+                                      : review._id
+                                  );
+                                }}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                              >
+                                <MoreVertical
+                                  size={20}
+                                  className="text-gray-600"
+                                />
+                              </button>
+
+                              {/* ✅ Dropdown Menu */}
+                              {showDropdown === review._id && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10">
+                                  <button
+                                    onClick={() => handleEditClick(review)}
+                                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                  >
+                                    <Edit3
+                                      size={16}
+                                      className="text-blue-600"
+                                    />
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setShowDeleteConfirm(review._id);
+                                      setShowDropdown(null);
+                                    }}
+                                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                  >
+                                    <Trash2 size={16} />
+                                    Delete 
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
 
                         <h5 className="font-medium text-gray-800 mb-2">
@@ -470,6 +615,48 @@ function Reviews({ bookId }) {
                         </div>
                       </div>
                     </div>
+
+                    {showDeleteConfirm === review._id && (
+                      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                              <Trash2 size={24} className="text-red-600" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold text-gray-800">
+                                Delete Review
+                              </h3>
+                              <p className="text-sm text-gray-600">
+                                This action cannot be undone
+                              </p>
+                            </div>
+                          </div>
+
+                          <p className="text-gray-700 mb-6">
+                            Are you sure you want to delete your review "
+                            {review.title}"?
+                          </p>
+
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() => handleDeleteReview(review._id)}
+                              disabled={isDeleting}
+                              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed transition-colors font-medium"
+                            >
+                              {isDeleting ? "Deleting..." : "Delete"}
+                            </button>
+                            <button
+                              onClick={() => setShowDeleteConfirm(null)}
+                              disabled={isDeleting}
+                              className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}      
                   </div>
                 );
               })
@@ -477,6 +664,124 @@ function Reviews({ bookId }) {
           </div>
         </div>
       </div>
+
+      {editingReview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full my-8">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-xl font-semibold text-gray-800">
+                Edit Your Review
+              </h3>
+              <button
+                onClick={() => {
+                  setEditingReview(null);
+                  setEditRating(0);
+                  setEditText("");
+                  setEditTitle("");
+                }}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X size={24} className="text-gray-600" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Review Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="Sum up your review in one line"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Your Rating <span className="text-red-500">*</span>
+                </label>
+                <div className="flex items-center gap-3">
+                  <StarRating
+                    rating={editRating}
+                    size={36}
+                    interactive={true}
+                    onRate={setEditRating}
+                  />
+                  {editRating > 0 && (
+                    <span className="text-sm text-gray-600 font-medium">
+                      {editRating} out of 5 stars
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Your Review <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  placeholder="Share details about your experience with this book..."
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  rows="6"
+                />
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-xs text-gray-500">
+                    Minimum 10 characters required
+                  </p>
+                  <p
+                    className={`text-xs font-medium ${
+                      editText.length >= 10 ? "text-green-600" : "text-red-500"
+                    }`}
+                  >
+                    {editText.length}/50
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-6 border-t border-gray-200">
+              <button
+                onClick={handleUpdateReview}
+                disabled={
+                  !editRating ||
+                  editText.trim().length < 10 ||
+                  !editTitle.trim() ||
+                  submitting
+                }
+                className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              >
+                {submitting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update Review"
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setEditingReview(null);
+                  setEditRating(0);
+                  setEditText("");
+                  setEditTitle("");
+                }}
+                disabled={submitting}
+                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      
     </div>
   );
 }
