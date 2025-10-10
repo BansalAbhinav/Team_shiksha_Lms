@@ -11,7 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { reviewAPI } from "../apis/reviewApi";
+import { reviewAPI } from "../apis/ReviewApi.js";
 import { toast } from "react-toastify";
 
 function Reviews({ bookId }) {
