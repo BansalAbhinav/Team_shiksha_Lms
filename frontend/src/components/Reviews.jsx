@@ -607,12 +607,12 @@ function Reviews({ bookId }) {
                           {review.description}
                         </p>
 
-                        <div className="flex items-center gap-3">
+                        {/* <div className="flex items-center gap-3">
                           <button className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 transition-colors">
                             <ThumbsUp size={16} />
                             <span>Helpful</span>
                           </button>
-                        </div>
+                        </div> */}
                       </div>
                     </div>
 
