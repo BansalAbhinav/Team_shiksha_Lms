@@ -28,8 +28,8 @@ app.use(cors({
 app.use(json());
 
 // Test route
-app.get("/api/test", (req, res) => {
-  res.json({ message: "✅ Backend is working!" });
+app.get("/", (req, res) => {
+  res.json({ message: "✅LMS TS Backend is working! " });
 });
 
 
